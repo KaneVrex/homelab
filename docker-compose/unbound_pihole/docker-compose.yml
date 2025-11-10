@@ -1,0 +1,48 @@
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+    environment:
+      TZ: 'Europe/Kyiv'
+      FTLCONF_webserver_api_password: $pass
+      FTLCONF_dns_listeningMode: 'all'
+#      PIHOLE_DNS_: "172.28.0.3;172.28.0.3"
+      FTLCONF_dns_upstreams: '172.28.0.3#53'
+    volumes:
+      - './etc-pihole:/etc/pihole'
+      - './etc-dnsmasq.d:/etc/dnsmasq.d'    
+      - "/etc/hosts:/etc/hosts:ro"
+    restart: unless-stopped
+    hostname: pihole
+    networks:
+      pihole_net:
+        ipv4_address: 172.28.0.2
+
+  unbound:
+    container_name: unbound
+    image: mvance/unbound-rpi:latest
+    environment:
+      TZ: 'Europe/Kyiv'
+    networks:
+      pihole_net:
+        ipv4_address: 172.28.0.3
+    volumes:
+      # Database for caching
+      - '/home/pinas/Documents/unbound_db:/var/lib/unbound' 
+      # Configuration files
+      - '/home/pinas/Documents/unbound_conf:/etc/unbound/custom.conf.d'
+    restart: unless-stopped
+    hostname: pihole-unbound
+
+networks:
+  pihole_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1

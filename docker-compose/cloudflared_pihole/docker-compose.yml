@@ -1,0 +1,54 @@
+services:
+  cloudflared:
+    container_name: cloudflared
+    # Restart on crashes and on reboots
+    restart: unless-stopped
+    image: cloudflare/cloudflared:latest
+    command: proxy-dns
+    # Attach cloudflared only to the private network
+    environment:
+      - "TUNNEL_DNS_UPSTREAM=https://1.1.1.1/dns-query,https://1.0.0.1/dns-query,https://9.9.9.9/dns-query,https://149.112.112.9/dns-query"
+      # Listen on an unprivileged port
+      - "TUNNEL_DNS_PORT=5053"
+      # Listen on all interfaces
+      - "TUNNEL_DNS_ADDRESS=0.0.0.0"
+    networks:
+      pihole_cloudflared:
+        ipv4_address: 172.28.0.3
+    security_opt:
+      - no-new-privileges:true
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "80:80/tcp"
+    networks:
+      pihole_cloudflared:
+        ipv4_address: 172.28.0.2
+    environment:
+      TZ: 'Europe/Kiev'
+      FTLCONF_webserver_api_password: $pass
+      FTLCONF_dns_upstreams: '172.28.0.3#5053'
+      DNSMASQ_LISTENING: 'all'
+      FTLCONF_dns_listeningMode: 'all'      
+
+    # Volumes store your data between container upgrades
+    volumes:
+      - '/home/pinas/pihole/:/etc/pihole/'
+      - '/home/pinas/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/'
+    restart: unless-stopped
+    depends_on:
+      - cloudflared
+
+networks:
+  pihole_cloudflared:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1

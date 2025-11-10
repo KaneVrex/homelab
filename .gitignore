@@ -1,0 +1,14 @@
+# common files
+
+*.log
+*.tmp
+*~
+*.env 
+*.local
+*.secret
+*.lock
+
+# folder specific 
+
+/docker-compose/red_discord_bot/
+/nix/secrets.nix
