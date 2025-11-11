@@ -181,7 +181,7 @@ in
 
     # host list and params
     virtualHosts = {
-      "http://proxmox.${localDomain}" = {
+      "proxmox.${localDomain}" = {
         extraConfig = ''
           tls internal
           reverse_proxy https://${proxmoxStaticIp}:8006 {
