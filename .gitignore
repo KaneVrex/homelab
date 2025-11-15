@@ -11,4 +11,5 @@
 # folder specific 
 
 /docker-compose/red_discord_bot/
-/nix/secrets.nix
+/nix/secrets/
+/documentation/Assisting commands.md

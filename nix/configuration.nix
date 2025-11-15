@@ -5,7 +5,7 @@ let
 # Imports
 
   # Secrets management - do not share! 
-  secrets = import ./secrets.nix;
+  secrets = import ./secrets/secrets.nix;
 
 # Variables forward declaration
 
@@ -115,7 +115,6 @@ in
 # Networking & Firewall
   
   # enable DHCP for first boot
-  # uncomment later drop DHCP and correct interface name
   networking.useDHCP = false;
   networking.interfaces.end0.ipv4.addresses = [
     { address = serverStaticIP; prefixLength = 24; }
@@ -125,14 +124,11 @@ in
   networking.nameservers = [ "127.0.0.1" "1.1.1.1" ]; 
    
   # adjust interface name and local address CIDR 
-  # temporary disabled for testing during first boot
   networking.firewall = {
     enable = true;
     allowPing = true;
     checkReversePath = "loose";
-    # temporary disabled for firt boot
     trustedInterfaces = [ "lo" config.services.tailscale.interfaceName ]; 
-    # trustedInterfaces = [ "lo" ]; 
     
     # Allow unrestricted access only from local network sometimes need additional port specification
     extraInputRules = ''
@@ -140,13 +136,11 @@ in
     '';
     
     # allow specific ports for services
-    # samba required a bit of manual configuration because it's "build different" 
-    # and is not a native service that modifies firewall rules on it's own
     # Ports: 139/445(Samba), 80/443(Caddy), 53(DNS)
-    allowedTCPPorts = [ 80 443 139 445 53 ]; 
+    allowedTCPPorts = [ ]; 
     # tailscale needs to be included here
     # Ports: 53(DNS), 41641(Tailscale)
-    allowedUDPPorts = [ 41641 53 ]; 
+    allowedUDPPorts = [ 41641 ]; 
   };
 
   # Disable WiFi, BT drivers, audio modules, sd_card, cd-rom
@@ -166,10 +160,9 @@ in
 
   # Tailscale external vpn service
   services.tailscale = {
-    # temporary disabled for firt boot
     enable = true;
     # enable local network advertisment for tailnetwork
-    # allows access to local network for devices on tailnetwork throu pi
+    # allows access to local network for devices on tailnetwork throu pi-server
     extraUpFlags = [
       "--advertise-routes=${localNetworkCIDR}"
     ];
@@ -232,7 +225,6 @@ in
       # fallback dns
       bootstrapDns = [ "1.1.1.1" "1.1.1.2" ];
 
-      # blocking config 
       blocking = {
         # block responce
         blockType = "nxDomain";
@@ -259,7 +251,6 @@ in
 
   # Samba File Share
   services.samba = {
-    # temporary disabled for firt boot
     enable = true;
     settings = {
       global = {
