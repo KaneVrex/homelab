@@ -19,7 +19,7 @@ let
   tailnetCIDR = secrets.tailnetCIDR;
   defaultGatewayIP = secrets.defaultGatewayIP;
 
-  # home.lab
+  # .lab
   localDomain = secrets.localDomain;
   
 in
@@ -113,29 +113,31 @@ in
   ];
 
 # Networking & Firewall
-  
-  # enable DHCP for first boot
+
   networking.useDHCP = false;
   networking.interfaces.end0.ipv4.addresses = [
     { address = serverStaticIP; prefixLength = 24; }
   ];
   networking.defaultGateway = defaultGatewayIP;
-  # add to nameservers as primaty when unbound and adguard is up "127.0.0.1"
+  # add primaty nameserver when unbound is up "127.0.0.1"
+  # cloudflare as redundancy
   networking.nameservers = [ "127.0.0.1" "1.1.1.1" ]; 
    
-  # adjust interface name and local address CIDR 
+  # use updated nftables firewall instead of iptables
+  networking.nftables.enable = true;
+
   networking.firewall = {
     enable = true;
-    allowPing = true;
+    allowPing = false;
     checkReversePath = "loose";
     trustedInterfaces = [ "lo" config.services.tailscale.interfaceName ]; 
     
-    # Allow unrestricted access only from local network sometimes need additional port specification
+    # Allow unrestricted access only from local network
     extraInputRules = ''
       ip saddr ${localNetworkCIDR} accept
     '';
     
-    # allow specific ports for services
+    # expose specific ports for services
     # Ports: 139/445(Samba), 80/443(Caddy), 53(DNS)
     allowedTCPPorts = [ ]; 
     # tailscale needs to be included here
